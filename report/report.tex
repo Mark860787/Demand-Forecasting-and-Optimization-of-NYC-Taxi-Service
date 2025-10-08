@@ -1,0 +1,266 @@
+% Setup - do not change
+\documentclass[11pt]{article}
+\usepackage[top=0.9in, left=0.9in, bottom=0.9in, right=0.9in]{geometry} 
+\usepackage{parskip}
+\usepackage{lscape}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsthm,amssymb,graphicx,pdfpages,lipsum,hyperref}
+\usepackage[none]{hyphenat}
+\usepackage{subfig}
+\usepackage{csquotes}
+\setlength\parindent{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% add other packages here if required
+
+%% Bibliography are specified in this file. You can also choose inline bib style if you want to. But make sure your citation style is consistent (and proper)
+% For more details on citation: https://library.unimelb.edu.au/recite
+\usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
+\addbibresource{references.bib}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% the '%' symbol denotes comments
+
+% Begin document creation
+% DELETE THE \lipsum PLACEHOLDERS WHEN YOU BEGIN
+\title{\textbf{Optimizing Yellow Taxi Services in NYC: Analyzing Autumn Demand Patterns and Revenue Prediction Models for 2022-2023}}
+\author{
+Hao Tian \\
+Student ID: 1342982 \\
+%% Replace the link with your github repo
+% 1. Remember to escape underscore (\_) in the link.
+% 2. Remember to include the commit you want to submit in the link
+\href{https://github.com/MAST30034-AppliedDataScience/project-1-individual-Mark860787}{Github repo with commit}
+}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+The type of yellow taxi in New York City is a core part of the city’s transportation network, serving millions of residents and tourists daily. Yellow cabs operate mainly in Manhattan. Because this is the most competitive area for ride-hailing services. The main reason for choosing yellow taxis for the analysis is their dominance in Manhattan, which better represents the taxi market dynamics in the region. As autumn 2024 approaches, taxi drivers and companies can learn from the past two years of yellow taxi trips experience. It will be better positioned to optimize operations and increase revenue. This report specifically analyzes demand trends during autumn 2022 and 2023, with a particular focus on yellow taxi demand during weekdays and different periods.
+
+The goal of this report is also to assist taxi drivers and companies in understanding demand patterns during peak hours (7:00-9:00 A.M. and 5:00-7:00 P.M.), enabling them to develop more effective strategies during periods of high passenger demand and improve their revenue. We will conduct an in-depth analysis of how factors such as hourly average precipitation, hourly average wind speed, hourly average visibility, trip distance, and trip duration affect the revenue of orders during these two autumn seasons. Through these data analyses, we aim to provide practical recommendations for drivers and companies to further enhance their services and increase their revenue in the upcoming autumn of 2024.
+ 
+
+
+\subsection{Dataset}
+The main dataset used in this analysis is sourced from the Taxi \& Limousine Commission (TLC) of New York City, covering yellow taxi data from September 1, 2022, to November 30, 2022, and from September 1, 2023, to November 30, 2023 \cite{TLC2023}. The TLC dataset contains a total of \textbf{19,820,617} records. Additionally, an external dataset from Visual Crossing Weather Data provides hourly precipitation, perceived temperature, wind speed, and visibility data for New York City during the same periods \cite{VisualCrossing2023}. The Visual Crossing dataset contains \textbf{4,370} records. All data are presented in units that comply with US standards, and the external dataset has been cleaned; no further pre-processing is needed.
+
+
+
+\subsection{Dataset Assumption}
+
+
+Considering that the yellow taxi coverage area in this analysis is New York City, the latitude and longitude of these areas are very close. The weather conditions in New York areas are more likely to be very similar from a geographical perspective. Due to limited access to precise external data, I have used the weather conditions in Manhattan, the downtown area of New York City, to represent the overall weather conditions of the entire city. It is assumed that the weather conditions are consistent within the same hour (for example, the weather conditions from 2022-09-01 23:00 to 2022-09-02 23:59 are assumed to be the same).
+
+
+% You can have \section{}, \subsection{}, and \subsubsection{}, \section*{}, \subsection*{}, and \subsubsection*{}
+\section{Preprocessing}
+
+\subsection{Delete Irrelevant Variables}
+Since our target is to analyze order demand and income, we deleted the variables intuitively unrelated to the forecast target. And according to the description of yellow taxi attributes, Fare amount, Extra Fee, MTA tax, Improvement surcharge and Tolls amount, Congestion Surcharge, Airport fee, have been counted in total revenue. Therefore, we delete them and payment type, and Vendor ID.
+
+
+\subsection{Handling Missing Values and Duplicates}
+In the main dataset of yellow taxi, only \texttt{passenger count(s)} and \texttt{ratecode ID} column contain missing value. It is difficult for us to determine based on historical circumstances how many passengers should be filled in a given taxi trip and infer where the passengers should get off. Therefore, it is difficult for us to fill this vacancy value according to the actual situation. Any inappropriate imputation could introduce bias into the analysis. Given the large volume of data and the fact that the missing values account for only 3.675\% and 4.407\% of the total, we chose to delete records with missing values in the \texttt{passenger} and \texttt{RatecodeID} attributes to ensure data authenticity. Additionally, we performed the necessary type conversions for the main dataset. Finally, we delete the duplicative records.Finally, we delete the duplicative records.
+
+\subsection{Combine External Dataset and Main Dataset} 
+We link two datasets based on the time column (hour level). Firstly, We format and extract the date and time of the external dataset and the main dataset into hours, then perform internal concatenation to link the datasets together, and finally delete duplicative columns.
+
+\subsection{Filter The Records Not In Analysis Time Range}
+
+We filter out data that might have been abnormally recorded in the dataset but were not between September 1, 2022 and November 30, 2022, or between September 1, 2023 and November 30, 2023.
+
+\subsection {Feature Engineering 1 : Duration} \textbf{Duration time} = Pick-up time - Drop-off time. Extracting trip time can better help us determine whether the weather will affect the duration time of the order (measured in minutes).
+
+\subsection {Feature Engineering 2 : Total Revenue}
+\textbf{Total Revenue} = Tip + Order revenue. From the description of dataset, the tip amount is not calculated into the order revenue. To better predict the total revenue of an order and reality of the actual situation, we add the tip amount and the order revenue together to total revenue.
+
+\subsection{Feature Engineering 3: Extract Hourly and Day of Week Orders } 
+We extract the total hourly order "hour" based on the passenger’s pick-up time. It is beneficial to provide clear reference and analysis for taxi drivers and taxi companies on the total hourly demand and weekly order demand based on data from the past two autumn seasons.
+
+
+\subsection{Feature Engineering 4: Data aggregation during peak hours}
+
+To analyze the relationship between weather characteristics during peak hours and order demand, we grouped and aggregated the data. Technically, we grouped the data by the number of days per week (day of the week) and calculated the average values of the following indicators: perceived temperature, precipitation, wind speed, visibility, trip duration, and trip distance. In addition, we also counted the total number of orders during peak hours every week. These aggregated features will be used to further analyze the impact of weather during peak hours on order demand.
+
+\section{Outlier Detection and Removal}
+
+\begin{itemize}
+    \item \textbf{Outlier 1 : Passenger Count.} According to New York taxi policy, the maximum number of passengers in a yellow taxi must be less than 6. Therefore, we removed records where the number of passengers is lower than 1 or higher than 6.
+    
+    \item \textbf{Outlier 2 : Trip Distance. } Firstly, considering that some passengers may cancel their orders at the instance or drivers might accidentally press the wrong meter button and then close it. These situations might result in a travel distance of 0 - 0.2 miles, so we remove this kind of trip record. Additionally, for those situations some drivers might have neglected to turn off the meter after delivering passengers to their destinations. We also consider the extreme situation(For instance, a passenger takes a 200-mile trip to another state). These unexpected situations would lead to a decrease in our analysis. Thus, we used the traditional Z-score method to detect outliers in trip distance.
+    
+    \item \textbf{Outlier 3 : Trip Duration.} Considering the traffic congestion during peak hours in New York City, we consider trips with a duration greater than 6 hours as outliers. This might be due to extreme congestion combined with long trip distances, or it could be caused by errors in the system's records. To maintain the precision and accuracy of the model, these outliers were directly removed.
+
+    \item \textbf{Outlier 4 : Total Revenue.} According to NYC's description of yellow taxi pricing, the minimum fare for an order cannot be less than \$4.00. Therefore, we removed records where the fare was recorded as less than \$4.00, which may have been caused by system errors. For the remaining orders, we continued to use the traditional Z-score method to remove outliers.
+\end{itemize}
+
+
+\section{Analysis and Geospatial Visualisation}
+
+\subsection{Analysis of Order Quantity Distribution by Day of the Week}
+\begin{figure}[h]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{autumn_2022_pie_chart.png}
+        \caption{Autumn 2022 Pie Chart}
+        \label{fig:autumn_2022}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{autumn_2023_pie_chart.png}
+        \caption{Autumn 2023 Pie Chart}
+        \label{fig:autumn_2023}
+    \end{minipage}
+\end{figure}
+
+We first counted the total number of orders for each day in the autumn of 2022 and 2023, and compared the differences between the two years' data. In order to better observe the weekly trend of order volume, we grouped the data by day of the week and summarized the order volume in order (Monday to Sunday). Through this aggregation, we can intuitively see the distribution of order volume on a daily basis.
+
+\subsubsection{Analysis of Order Volume in Autumn 2022}
+
+In the autumn 2022 data, the days with the highest order volume are Thursday and Wednesday, accounting for 15.3\% and 15.3\% of the total order volume, respectively. The high order volume on these days may reflect a greater demand for travel in the middle of the workweek, with Tuesday's order volume following closely behind, accounting for 14.8\%. It is worth noting that the order volume on weekends (Saturday and Sunday) is relatively low, especially on Sundays, which account for only 11.7\%. This may be due to a decrease in people's travel demand on weekends.
+
+Through the pie chart (Chart 1), we can clearly see the proportion of daily order volume, which helps to understand the demand patterns for taxis on different days.
+
+\subsubsection{Analysis of Order Volume in Autumn 2023}
+
+In the autumn 2023 data, the distribution of order volume is similar to that of 2022, but there are also some tiny changes. Thursday remains the day with the highest order volume, accounting for 15.6\% of the total order volume, followed by Wednesday, accounting for 15.8\%. The order volume on Tuesdays has decreased in 2023, accounting for 13.0\%. Compared to 2022, the order volume on Saturdays has slightly decreased, while the order volume on Sundays has increased, accounting for 12.2\%.
+
+From the pie chart (Chart 2), it can be seen that the distribution of order volume in 2023 is more balanced, especially on weekdays (Monday to Friday), with little difference in the proportion of order volume on each day.
+
+\subsection{Hourly order demand analysis (Autumn 2022 and 2023)}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.45\textwidth]{autumn_2022_hourly_Orders.png}
+    \hfill
+    \includegraphics[width=0.45\textwidth]{autumn_2023_Orders_demand.png}
+    \caption{Left: Distribution of Average Daily Pickups in NYC\textsuperscript{1}. Right: Distribution of Average Daily Pickups in NYC\textsuperscript{2}.}
+    \label{fig:comparison_pickups}
+\end{figure}
+
+
+\subsubsection{Hourly Order Demand Pattern Of Day}
+
+From the hourly order demand maps for autumn 2022 and autumn 2023, we can observe the hourly order demand has very similar patterns throughout the day. We conclude that the peak periods are from 7:00-9:00 A.M and 5:00-7:00 P.M.
+
+\subsubsection{Hourly Order Demand Pattern for Autumn 2022}
+
+\begin{itemize}
+    \item The hourly demand for orders gradually decreases in the early morning (0:00-5:00), reaching the lowest point of the day.
+    \item Starting from 6:00 am, the hourly demand for orders rapidly increases, reaching a peak around 9:00 am. This indicates that the morning is a peak period for orders, likely related to people going to work and school.
+    \item Between 9:00 am and 4:00 pm, the hourly demand for orders remains relatively high and stable, but there is no significant peak during this period.
+    \item Between 5:00 pm and 7:00 pm, the hourly demand for orders peaks again, indicating another high-demand period likely related to the evening rush hour.
+    \item After 7:00 pm, the hourly demand for orders gradually decreases until midnight.
+\end{itemize}
+
+\subsubsection{Hourly Order Demand Pattern for Autumn 2023}
+
+\begin{itemize}
+    \item Similar to the pattern in 2022, the hourly demand for orders in 2023 gradually decreases in the early morning (0:00-5:00) and then rapidly increases after 6:00 am.
+    \item The peak hourly demand periods for orders in 2023 are similar to those in 2022, with clear peaks at 9:00 am and 5:00 pm to 7:00 pm.
+    \item However, compared to 2022, the hourly demand for orders between 10:00 am and 4:00 pm in 2023 has slightly decreased, suggesting a possible decline in travel needs during this period.
+    \item The nighttime hourly demand trend is similar to that of 2022, showing a gradually decreasing pattern.
+\end{itemize}
+
+\subsection{Correlation Analysis for Peak Hour Order Demand}
+
+We analyzed the relationship between weather features and order demand during peak hours, defined as 7:00-9:00 A.M. and 5:00-7:00 P.M. The features considered include trip count, perceived temperature, precipitation, wind speed, visibility, trip duration, and trip distance.
+
+\begin{enumerate}
+    \item \textbf{Negative Correlation Between Average Trip Distance During Peak Hours and Peak Hour Trip Count (correlation = -91\%)}: This is the most significant correlation observed, indicating that shorter trips are much more common during peak hours. For taxi services, this suggests that deploying more vehicles for shorter trips during peak hours could better meet the increased demand.
+
+    \item \textbf{Positive Correlation Between Average Trip Duration During Peak Hours and Peak Hour Trip Count (correlation = 72\%)}: This positive correlation implies that the number of trips during peak hours is positively associated with trip duration. This might reflect that even though trips are shorter in distance during congested periods, they require more time, indicating the impact of traffic conditions on taxi demand.
+
+    \item \textbf{Moderate Positive Correlation Between Average Precipitation During Peak Hours and Peak Hour Trip Count (correlation = 32\%)}: This suggests that higher precipitation during peak hours could lead to an increase in the number of trips. The likely reason is that rain makes walking and other forms of transportation less convenient, prompting more passengers to opt for taxis.
+
+    \item \textbf{Negative Correlation Between Average Visibility During Peak Hours and Peak Hour Trip Count (correlation = -20\%)}: This strong negative correlation suggests that lower visibility is associated with a decrease in the number of trips. Low visibility might be due to fog, rain, or other weather conditions, which could not only affect driving safety but also reduce passengers' willingness to travel.
+
+    \item \textbf{Negative Correlation Between Average Wind Speed During Peak Hours and Peak Hour Trip Count (correlation = -18\%)}: This correlation indicates that higher wind speeds may lead to a decrease in taxi demand, possibly because people are more likely to avoid going out in windy conditions.
+
+    \item \textbf{Very Weak Correlation Between Average Feels-Like Temperature During Peak Hours and Peak Hour Trip Count (correlation = -2.7\%)}: The almost negligible correlation suggests that feels-like temperature does not significantly impact taxi demand during peak hours, indicating that it is not a primary factor influencing taxi use in these periods.
+\end{enumerate}
+
+\section{Modelling}
+
+\subsection{Using Linear Regression to Predict Revenue}
+
+Since the number of trips and total revenue are highly related, we explored whether we could use the factors that predict trip count to also predict total revenue. To do this, we built a simple linear regression model using the following factors:
+
+\begin{itemize}
+    \item \textbf{Trip Distance}: How far the trip was.
+    \item \textbf{Wind Speed}: The wind speed during the trip.
+    \item \textbf{Precipitation}: The amount of rain during the trip.
+    \item \textbf{Trip Duration}: How long the trip took.
+    \item \textbf{Passenger Count}: The number of passengers on the trip.
+\end{itemize}
+
+These factors were combined to predict the total revenue from a trip.
+
+\subsubsection{Model Training and Evaluation}
+
+We trained the model with 80\% of our data and tested it with the remaining 20\%. The model gave us the following results:
+
+\begin{itemize}
+    \item \textbf{Mean Absolute Error (MAE)}: 5.87
+    \item \textbf{Mean Squared Error (MSE)}: 97.62
+    \item \textbf{Root Mean Squared Error (RMSE)}: 9.88
+    \item \textbf{R-squared (R²)}: 0.82
+\end{itemize}
+
+\subsubsection{What These Results Mean}
+
+The model’s R-squared value of 0.82 means it can explain about 82\% of the changes in revenue based on the factors we used. This shows that the model is pretty good at predicting revenue using these factors. However, there is some error (RMSE of 9.88), so there’s room to improve the model or consider more factors.
+
+Given the close relationship between trip count and revenue, these results suggest that it’s possible to predict total revenue based on factors that usually predict trip count. This can be useful for planning and decision-making, especially when you need to estimate earnings quickly based on trip data.
+
+\subsection{Random Forest Model for Predicting Revenue}
+
+To further improve the accuracy of predicting total revenue, we implemented a Random Forest model. This model used the following features for prediction:
+
+\begin{itemize}
+    \item \textbf{Trip Distance}: The total distance of the trip.
+    \item \textbf{Wind Speed}: The wind speed during the trip.
+    \item \textbf{Precipitation}: The amount of rain during the trip.
+    \item \textbf{Trip Duration}: The total duration of the trip.
+    \item \textbf{Passenger Count}: The number of passengers on the trip.
+\end{itemize}
+
+We sampled 10\% of the data for model training and validated the model on the test data. The evaluation results are as follows:
+
+\begin{itemize}
+    \item \textbf{Root Mean Squared Error (RMSE)}: 10.07
+    \item \textbf{Mean Squared Error (MSE)}: 101.38
+    \item \textbf{R-squared (R²)}: 0.81
+    \item \textbf{Mean Absolute Error (MAE)}: 5.80
+\end{itemize}
+
+\subsubsection{Interpretation of Results}
+
+The model’s R-squared value of 0.81 indicates that it can explain about 81\% of the variance in total revenue, suggesting that the model is effective in predicting revenue. However, the RMSE value of 10.07 indicates that there is still some level of prediction error. Despite this, the Random Forest model remains a useful tool that can help companies and drivers estimate revenue, allowing for better planning and service management.
+
+\section{Recommendations and Limitations}
+
+\subsection{Increase Taxi Supply During Autumn Peak Hours}
+Given the clear peak periods between 7:00-9:00 A.M. and 5:00-7:00 P.M., it is recommended that taxi drivers and companies increase the supply of vehicles during these times to meet higher demand. Deploying more vehicles during peak hours can maximize revenue and reduce passenger wait times.
+
+\subsection{Adjust Supply During Weekdays and Weekends}
+It is advised that taxi drivers and companies increase capacity during weekdays, particularly on Wednesdays and Thursdays, to meet the higher travel demand. Additionally, maintaining a certain level of capacity on weekends, especially Saturdays, can capture this portion of market demand. Analyzing the trend changes over the past two years will help better predict the demand for 2024 autumn orders, providing historical references for drivers and companies to optimize their operational strategies and increase revenue.
+
+\subsection{Optimize Working Hours}
+The data from the past two autumns indicates that taxi demand peaks during morning and evening commuting hours. Drivers should focus on operating during these periods to maximize revenue. In contrast, during late night and early morning hours, when demand significantly decreases, it is recommended that drivers reduce their operation to improve efficiency. These findings can help taxi companies and drivers better arrange working hours, fully utilizing market opportunities during peak demand periods to enhance overall income.
+
+\subsection{Improve Model Accuracy}
+There are some limitations in the current report's model, such as weak correlations among the data features. For nonlinear variables, a linear regression model may lead to distorted predictions. It is recommended to include more data features or transform the distribution of the data to improve the model's accuracy.
+
+\subsection{External Data Usage}
+In this analysis, we used Manhattan’s weather characteristics to represent the entire New York City's weather conditions. However, this approach may distort the true data structure to some extent. It is suggested that future analyses consider more precise weather data or distinguish between different areas to improve the accuracy of the analysis.
+
+
+
+\clearpage 
+\printbibliography
+
+\end{document}
