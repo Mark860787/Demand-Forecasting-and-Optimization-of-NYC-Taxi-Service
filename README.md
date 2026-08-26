@@ -366,14 +366,13 @@ nyc-yellow-taxi-analysis/
 ├── README.md
 ├── report_pdf_version.pdf
 │
-├── Playground.ipynb
-├── pre-process.ipynb
-├── EDA.ipynb
-├── geography graph.ipynb
-└── Model.ipynb
+├── 01_data_acquisition.ipynb
+├── 02_preprocess.ipynb
+├── 03_EDA.ipynb
+├── 04_revenue_modeling.ipynb
 ```
 
-### `Playground.ipynb`
+### `01_data_acquisition.ipynb`
 
 Handles **data acquisition**, including:
 
@@ -381,11 +380,11 @@ Handles **data acquisition**, including:
 * Visual Crossing weather data; and
 * NYC Taxi Zone geographic data.
 
-### `pre-process.ipynb`
+### `02_preprocess,ipynb`
 
 Contains the main **PySpark preprocessing and feature-engineering pipeline**, including data cleaning, external-data integration, feature construction, and outlier handling.
 
-### `EDA.ipynb`
+### `03_EDA.ipynb`
 
 Contains exploratory analysis of:
 
@@ -394,11 +393,7 @@ Contains exploratory analysis of:
 * peak-hour identification; and
 * correlations between demand, trip characteristics, and weather.
 
-### `geography graph.ipynb`
-
-Contains the **geospatial analysis and visualisation** of peak-hour taxi demand using NYC taxi-zone geographic data.
-
-### `Model.ipynb`
+### `04_revenue_modeling.ipynb`
 
 Contains the revenue prediction experiments using:
 
