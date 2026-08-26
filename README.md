@@ -4,7 +4,7 @@ A large-scale data analytics project investigating **New York City Yellow Taxi d
 
 The project combines NYC Taxi & Limousine Commission trip data with hourly weather observations and applies **PySpark-based data preprocessing, exploratory data analysis, geospatial visualisation, and regression modelling** to derive practical insights for taxi operations.
 
-📄 **[View the full project report]((https://github.com/Mark860787/nyc-yellow-taxi-demand-revenue-analysis/blob/main/report/report_pdf_version.pdf))**
+📄 **[View the full project report](https://github.com/Mark860787/nyc-yellow-taxi-demand-revenue-analysis/blob/main/report/report_pdf_version.pdf)**
 
 ---
 
