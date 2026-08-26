@@ -1,5 +1,5 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/Yi0Zbe2y)
-# MAST30034 Project 1 README.md
+# MAST30034 Project 1
 - Name: `Hao Tian`
 - Student ID: `1342982`
 - Research Goal: My research goal is to analyze yellow taxi service demand patterns during autumn 2022 and 2023 in New York City, focusing on peak hours and weekdays. The aim is to provide practical recommendations for taxi drivers and companies to optimize operations and increase revenue during the upcoming autumn of 2024.
